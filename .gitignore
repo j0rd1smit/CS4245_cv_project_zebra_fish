@@ -130,3 +130,8 @@ dmypy.json
 
 # ide
 .idea
+fish_dataset-fish_dataset/
+fish_dataset.zip
+output/
+unseen/
+via.html
