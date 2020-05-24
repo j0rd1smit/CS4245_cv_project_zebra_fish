@@ -13,6 +13,8 @@ class LossEvalHook(HookBase):
         self._period = eval_period
         self._data_loader = data_loader
 
+        assert eval_period % 20 == 0, "Must be multiple of 20 for some unknown reason."
+
     def _do_loss_eval(self):
         # Copying inference_on_dataset from evaluator.py
         total = len(self._data_loader)
@@ -25,12 +27,16 @@ class LossEvalHook(HookBase):
             if idx == num_warmup:
                 start_time = time.perf_counter()
                 total_compute_time = 0
+
             start_compute_time = time.perf_counter()
+
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
+
             total_compute_time += time.perf_counter() - start_compute_time
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
             seconds_per_img = total_compute_time / iters_after_start
+
             if idx >= num_warmup * 2 or seconds_per_img > 5:
                 total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
                 eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))
@@ -43,6 +49,7 @@ class LossEvalHook(HookBase):
                 )
             loss_batch = self._get_loss(inputs)
             losses.append(loss_batch)
+
         mean_loss = np.mean(losses)
         self.trainer.storage.put_scalar('validation_loss', mean_loss)
         comm.synchronize()
@@ -62,6 +69,8 @@ class LossEvalHook(HookBase):
     def after_step(self):
         next_iter = self.trainer.iter + 1
         is_final = next_iter == self.trainer.max_iter
+
         if is_final or (self._period > 0 and next_iter % self._period == 0):
             self._do_loss_eval()
+
         self.trainer.storage.put_scalars(timetest=12)
