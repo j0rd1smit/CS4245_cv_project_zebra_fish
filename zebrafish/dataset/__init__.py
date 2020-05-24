@@ -8,16 +8,25 @@ from detectron2.structures import BoxMode
 from sklearn.model_selection import train_test_split
 
 
-def register_datasets(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
+DIRECTION_CLASSES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+
+def register_datasets(path_to_dataset_dir, use_direction_classes, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
     if clear:
         DatasetCatalog.clear()
 
     dataset_names = ["train", "test"] if validation_size == 0.0 else ["train", "val", "test"]
     dataset_configs = dict(zip(dataset_names, get_dataset_configs(path_to_dataset_dir, validation_size, test_size, seed)))
 
+    if use_direction_classes:
+        thing_classes = list(DIRECTION_CLASSES)
+    else:
+        thing_classes = ["zebra_fish"]
+
     for name in dataset_names:
-        DatasetCatalog.register(name, lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name]))
-        MetadataCatalog.get(name).set(thing_classes=["zebra_fish"]) #TODO
+        DatasetCatalog.register(name, lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes))
+
+        MetadataCatalog.get(name).set(thing_classes=thing_classes)
 
 
 def get_dataset_configs(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42):
@@ -37,8 +46,9 @@ def get_dataset_configs(path_to_dataset_dir, validation_size =  0.25, test_size 
     return dict(train_set), dict(test_set)
 
 
-def config_to_dataset(img_dir, config):
+def config_to_dataset(img_dir, config, use_direction_classes):
     i = 0
+
 
     dataset_dicts = []
     for k, image_data in config.items():
@@ -62,11 +72,18 @@ def config_to_dataset(img_dir, config):
             poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
             poly = list(itertools.chain.from_iterable(poly))
 
+            if use_direction_classes:
+                assert "class" in region["region_attributes"], "No class found for " + record["file_name"]
+                category_id = DIRECTION_CLASSES.index(region["region_attributes"]["class"])
+                assert category_id != -1, "Unknown class label: " + region["region_attributes"]["class"]
+            else:
+                category_id = 0
+
             annotation = {
                 "bbox": [min(px), min(py), max(px), max(py)],
                 "bbox_mode": BoxMode.XYXY_ABS,
                 "segmentation": [poly],
-                "category_id": 0,  # There is only 1 catagory
+                "category_id": category_id,  # There is only 1 catagory
                 "iscrowd": 0
             }
             annotations.append(annotation)
@@ -79,8 +96,8 @@ def config_to_dataset(img_dir, config):
 
 
 if __name__ == '__main__':
-    print(os.getcwd())
-    train, val, test = get_dataset_configs("../../dataset")
-    print(len(train))
-    print(len(val))
-    print(len(test))
+    path = "../../dataset"
+    train, val, test = get_dataset_configs(path)
+    print(config_to_dataset(path, train, True))
+    print(config_to_dataset(path, val, True))
+    print(config_to_dataset(path, val, True))

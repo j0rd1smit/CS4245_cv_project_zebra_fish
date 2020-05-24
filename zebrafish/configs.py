@@ -3,8 +3,10 @@ import datetime
 
 from detectron2.model_zoo import model_zoo
 
+from zebrafish.dataset import DIRECTION_CLASSES
 
-def get_default_config(cfg, training_set_name, validation_set_name, max_iter = 1000):
+
+def get_default_config(cfg, training_set_name, validation_set_name, use_direction_classes, max_iter = 1000):
     # General
     cfg.SEED = 42
     cfg.OUTPUT_DIR = get_new_output_dir_path()
@@ -29,7 +31,7 @@ def get_default_config(cfg, training_set_name, validation_set_name, max_iter = 1
 
     # Model
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 5
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (zebra_fish)
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1 if not use_direction_classes else len(DIRECTION_CLASSES)
     cfg.MODEL.BACKBONE.FREEZE_AT = 2
 
     return cfg
