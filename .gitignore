@@ -135,3 +135,13 @@ fish_dataset.zip
 output/
 unseen/
 via.html
+
+
+#data
+/**/*.zip
+
+fish_dataset-fish_dataset_1_0/README.md
+fish_dataset-fish_dataset_1_0/test/
+fish_dataset-fish_dataset_1_0/train/
+fish_dataset-fish_dataset_1_0/validation/
+fish_dataset_1_0.zip

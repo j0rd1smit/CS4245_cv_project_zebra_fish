@@ -7,7 +7,7 @@ from detectron2.model_zoo import model_zoo
 def get_default_config(cfg, training_set_name, validation_set_name, max_iter = 1000):
     # General
     cfg.SEED = 42
-    cfg.OUTPUT_DIR = f"output/{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
+    cfg.OUTPUT_DIR = get_new_output_dir_path()
 
     # Data set
     cfg.DATASETS.TRAIN = (training_set_name,)
@@ -30,6 +30,9 @@ def get_default_config(cfg, training_set_name, validation_set_name, max_iter = 1
 
     return cfg
 
+
+def get_new_output_dir_path():
+    return f"output/{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
 
 def get_instance_segmentation_config(training_set_name, validation_set_name, max_iter = 1000):
     cfg = get_cfg()
