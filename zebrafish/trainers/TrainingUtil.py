@@ -9,10 +9,11 @@ def train(cfg, resume=False):
     if not resume:
         cfg.OUTPUT_DIR = get_new_output_dir_path()
 
-        with open(cfg.PICKLE, "wb") as f:
-            pickle.dump(cfg, f)
-
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+
+    with open(cfg.PICKLE, "wb") as f:
+        pickle.dump(cfg, f)
+
     trainer = CocoTrainer(cfg)
     trainer.resume_or_load(resume=resume)
     trainer.train()

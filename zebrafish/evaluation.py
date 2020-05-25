@@ -65,7 +65,13 @@ def coco_evaluation(cfg, dataset_name):
 
 def coco_evaluation_all_model(dataset_name, models_path = "output"):
     results = []
-    models = get_all_stored_model_paths(models_path=models_path)
+    paths = get_all_stored_model_paths(models_path=models_path)
+    models = []
+
+    for path in paths:
+        if os.path.isfile(os.path.join(path, "model_final.pth")):
+            models.append(path)
+
     for path in models:
         cfg = load_config(path)
         results.append(coco_evaluation(cfg, dataset_name))
@@ -81,6 +87,9 @@ def coco_evaluation_all_model(dataset_name, models_path = "output"):
         segm["model"] = model
         for k, v in result["segm"].items():
             segm[k].append(v)
+
+    bbox = {k: v for k,v in bbox.items() if len(v) == len(models) or k == "model"}
+    segm = {k: v for k, v in segm.items() if len(v) == len(models) or k == "model"}
 
     bbox_df = pd.DataFrame.from_dict(bbox)
     segm_df = pd.DataFrame.from_dict(segm)

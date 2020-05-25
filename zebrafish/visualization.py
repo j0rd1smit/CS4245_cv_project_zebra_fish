@@ -21,7 +21,7 @@ def plot_all_model_validation_loss(models_path = "output", show_training_loss= F
     plot_train_vs_validation_loss(models, show_training_loss=show_training_loss, show=show)
 
 
-def plot_train_vs_validation_loss(output_dirs, labels = None, show_training_loss= True, show=True):
+def plot_train_vs_validation_loss(output_dirs, labels = None, show_training_loss= False, show=True):
     colors = list(mcolors.TABLEAU_COLORS.keys())
     assert len(output_dirs) <= len(colors)
 

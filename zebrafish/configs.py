@@ -42,7 +42,7 @@ def get_default_instance_segmentation_config(use_direction_classes, training_set
     cfg.DATASETS.TEST = (get_name_with_prefix(test_set_name, use_direction_classes),)  # TODO can I add test set also here?
     cfg.DATASETS.USE_DIRECTION_CLASSES = use_direction_classes
 
-    cfg.DATALOADER.NUM_WORKERS = 8
+    cfg.DATALOADER.NUM_WORKERS = 2
 
     # validation
     cfg.TEST.EVAL_PERIOD = 60

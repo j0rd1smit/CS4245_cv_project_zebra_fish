@@ -38,8 +38,8 @@ def register_datasets(path_to_dataset_dir, validation_size =  0.25, test_size = 
     if clear:
         DatasetCatalog.clear()
 
-    register_datasets_type(path_to_dataset_dir, True, validation_size=validation_size, test_size=test_size, seed=42, clear=False)
-    register_datasets_type(path_to_dataset_dir, False, validation_size=validation_size, test_size=test_size, seed=42, clear=False)
+    register_datasets_type(path_to_dataset_dir, True, validation_size=validation_size, test_size=test_size, seed=seed, clear=False)
+    register_datasets_type(path_to_dataset_dir, False, validation_size=validation_size, test_size=test_size, seed=seed, clear=False)
 
 
 def register_datasets_type(path_to_dataset_dir, use_direction_classes, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
