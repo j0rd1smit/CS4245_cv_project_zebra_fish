@@ -9,14 +9,47 @@ from sklearn.model_selection import train_test_split
 
 
 DIRECTION_CLASSES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+DIRECTION_PREFIX = "_direction"
+WITHOUT_DIRECTION_PREFIX = "_without_direction"
 
 
-def register_datasets(path_to_dataset_dir, use_direction_classes, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
+def load_all_image_in_dataset(name, cfg):
+    images = []
+
+    for image_data in get_dataset(name, cfg):
+        images.append(cv2.imread(image_data["file_name"]))
+
+    return images
+
+
+def get_dataset(name, cfg):
+    return DatasetCatalog.get(get_name_with_prefix(name, cfg.DATASETS.USE_DIRECTION_CLASSES))
+
+
+def get_meta_dataset(name, cfg):
+    return MetadataCatalog.get(get_name_with_prefix(name, cfg.DATASETS.USE_DIRECTION_CLASSES))
+
+
+def get_name_with_prefix(name, use_direction_classes):
+    return name + DIRECTION_PREFIX if use_direction_classes else name + WITHOUT_DIRECTION_PREFIX
+
+
+def register_datasets(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
+    if clear:
+        DatasetCatalog.clear()
+
+    register_datasets_type(path_to_dataset_dir, True, validation_size=validation_size, test_size=test_size, seed=42, clear=False)
+    register_datasets_type(path_to_dataset_dir, False, validation_size=validation_size, test_size=test_size, seed=42, clear=False)
+
+
+def register_datasets_type(path_to_dataset_dir, use_direction_classes, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
     if clear:
         DatasetCatalog.clear()
 
     dataset_names = ["train", "test"] if validation_size == 0.0 else ["train", "val", "test"]
-    dataset_configs = dict(zip(dataset_names, get_dataset_configs(path_to_dataset_dir, validation_size, test_size, seed)))
+    configs = get_dataset_configs(path_to_dataset_dir, validation_size, test_size, seed)
+
+    dataset_configs = dict(zip(dataset_names, configs))
 
     if use_direction_classes:
         thing_classes = list(DIRECTION_CLASSES)
@@ -24,9 +57,10 @@ def register_datasets(path_to_dataset_dir, use_direction_classes, validation_siz
         thing_classes = ["zebra_fish"]
 
     for name in dataset_names:
-        DatasetCatalog.register(name, lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes))
+        DatasetCatalog.register(get_name_with_prefix(name, use_direction_classes), lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes))
 
-        MetadataCatalog.get(name).set(thing_classes=thing_classes)
+
+        MetadataCatalog.get(get_name_with_prefix(name, use_direction_classes)).set(thing_classes=thing_classes)
 
 
 def get_dataset_configs(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42):
@@ -49,8 +83,8 @@ def get_dataset_configs(path_to_dataset_dir, validation_size =  0.25, test_size 
 def config_to_dataset(img_dir, config, use_direction_classes):
     i = 0
 
-
     dataset_dicts = []
+
     for k, image_data in config.items():
         record = dict()
 
@@ -93,11 +127,7 @@ def config_to_dataset(img_dir, config, use_direction_classes):
         dataset_dicts.append(record)
     return dataset_dicts
 
+def segemeted_image(image, prediction):
+    masks = prediction["instances"].pred_masks.cpu().numpy()
 
 
-if __name__ == '__main__':
-    path = "../../dataset"
-    train, val, test = get_dataset_configs(path)
-    print(config_to_dataset(path, train, True))
-    print(config_to_dataset(path, val, True))
-    print(config_to_dataset(path, val, True))
