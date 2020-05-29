@@ -67,6 +67,9 @@ def coco_evaluation_all_model(dataset_name, models_path = "output"):
     results = []
     paths = get_all_stored_model_paths(models_path=models_path)
     models = []
+    used_directions = []
+    max_iterations = []
+    lrs = []
 
     for path in paths:
         if os.path.isfile(os.path.join(path, "model_final.pth")):
@@ -75,21 +78,33 @@ def coco_evaluation_all_model(dataset_name, models_path = "output"):
     for path in models:
         cfg = load_config(path)
         results.append(coco_evaluation(cfg, dataset_name))
+        used_directions.append(cfg.DATASETS.USE_DIRECTION_CLASSES)
+        max_iterations.append(cfg.SOLVER.MAX_ITER)
+        lrs.append(cfg.SOLVER.BASE_LR)
 
     bbox = defaultdict(list)
+    bbox["model"] = models
+    bbox["used_direction"] = used_directions
+    bbox["max_iteration"] = max_iterations
+    bbox["lrs"] = lrs
+
     segm = defaultdict(list)
+    segm["model"] = models
+    segm["used_direction"] = used_directions
+    segm["max_iteration"] = max_iterations
+    segm["lrs"] = lrs
+
 
     for result, model in zip(results, models):
-        bbox["model"] = model
         for k, v in result["bbox"].items():
             bbox[k].append(v)
 
-        segm["model"] = model
         for k, v in result["segm"].items():
             segm[k].append(v)
 
     bbox = {k: v for k,v in bbox.items() if len(v) == len(models) or k == "model"}
     segm = {k: v for k, v in segm.items() if len(v) == len(models) or k == "model"}
+
 
     bbox_df = pd.DataFrame.from_dict(bbox)
     segm_df = pd.DataFrame.from_dict(segm)
