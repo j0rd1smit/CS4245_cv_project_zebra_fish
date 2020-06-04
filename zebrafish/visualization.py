@@ -63,7 +63,7 @@ def plot_dataset(dataset_name, cfg, n_images = 1):
     dataset_name_with_prefix = get_name_with_prefix(dataset_name, cfg.DATASETS.USE_DIRECTION_CLASSES)
     metadata = MetadataCatalog.get(dataset_name_with_prefix)
 
-    for image_data in DatasetCatalog.get(dataset_name)[:n_images]:
+    for image_data in DatasetCatalog.get(dataset_name_with_prefix)[:n_images]:
         img = cv2.imread(image_data["file_name"])
         visualizer = Visualizer(img[:, :, ::-1], metadata=metadata, scale=0.5)
         vis = visualizer.draw_dataset_dict(image_data)
@@ -74,7 +74,7 @@ def plot_dataset(dataset_name, cfg, n_images = 1):
         plt.show()
 
 
-def plot_prediction(image, prediction, cfg):
+def plot_prediction(image, prediction, cfg, title=""):
     meta_data = get_meta_dataset("train", cfg)
 
     v = Visualizer(image[:, :, ::-1],
@@ -86,6 +86,7 @@ def plot_prediction(image, prediction, cfg):
 
     plt.figure(figsize=(14, 10))
     plt.imshow(cv2.cvtColor(v.get_image()[:, :, ::-1], cv2.COLOR_BGR2RGB))
+    plt.title(title)
     plt.show()
 
 

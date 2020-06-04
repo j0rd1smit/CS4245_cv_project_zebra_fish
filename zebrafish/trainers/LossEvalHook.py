@@ -37,8 +37,9 @@ class LossEvalHook(HookBase):
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
             seconds_per_img = total_compute_time / iters_after_start
 
+            """
             if idx >= num_warmup * 2 or seconds_per_img > 5:
-                total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
+               total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
                 eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))
                 log_every_n_seconds(
                     logging.INFO,
@@ -47,6 +48,7 @@ class LossEvalHook(HookBase):
                     ),
                     n=5,
                 )
+            """
             loss_batch = self._get_loss(inputs)
             losses.append(loss_batch)
 

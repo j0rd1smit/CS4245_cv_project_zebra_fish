@@ -8,6 +8,7 @@ from detectron2.structures import BoxMode
 from sklearn.model_selection import train_test_split
 
 
+
 DIRECTION_CLASSES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 DIRECTION_PREFIX = "_direction"
 WITHOUT_DIRECTION_PREFIX = "_without_direction"
@@ -34,7 +35,7 @@ def get_name_with_prefix(name, use_direction_classes):
     return name + DIRECTION_PREFIX if use_direction_classes else name + WITHOUT_DIRECTION_PREFIX
 
 
-def register_datasets(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
+def register_datasets(path_to_dataset_dir, validation_size =  0.1, test_size = 0.1, seed=42, clear=True):
     if clear:
         DatasetCatalog.clear()
 
@@ -42,12 +43,13 @@ def register_datasets(path_to_dataset_dir, validation_size =  0.25, test_size = 
     register_datasets_type(path_to_dataset_dir, False, validation_size=validation_size, test_size=test_size, seed=seed, clear=False)
 
 
-def register_datasets_type(path_to_dataset_dir, use_direction_classes, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
+def register_datasets_type(path_to_dataset_dir, use_direction_classes, validation_size =  0.1, test_size = 0.1, seed=42, clear=True):
     if clear:
         DatasetCatalog.clear()
 
     dataset_names = ["train", "test"] if validation_size == 0.0 else ["train", "val", "test"]
     configs = get_dataset_configs(path_to_dataset_dir, validation_size, test_size, seed)
+
 
     dataset_configs = dict(zip(dataset_names, configs))
 
@@ -56,14 +58,16 @@ def register_datasets_type(path_to_dataset_dir, use_direction_classes, validatio
     else:
         thing_classes = ["zebra_fish"]
 
-    for name in dataset_names:
-        DatasetCatalog.register(get_name_with_prefix(name, use_direction_classes), lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes))
+    def __fetch_data_set(name):
+        return lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes)
 
+    for name in dataset_names:
+        DatasetCatalog.register(get_name_with_prefix(name, use_direction_classes), __fetch_data_set(name))
 
         MetadataCatalog.get(get_name_with_prefix(name, use_direction_classes)).set(thing_classes=thing_classes)
 
 
-def get_dataset_configs(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42):
+def get_dataset_configs(path_to_dataset_dir, validation_size =  0.1, test_size = 0.1, seed=42):
     assert test_size > 0
     assert validation_size >= 0
     assert validation_size + test_size < 1
@@ -127,7 +131,27 @@ def config_to_dataset(img_dir, config, use_direction_classes):
         dataset_dicts.append(record)
     return dataset_dicts
 
-def segemeted_image(image, prediction):
-    masks = prediction["instances"].pred_masks.cpu().numpy()
 
 
+
+if __name__ == '__main__':
+    from zebrafish.configs import get_default_instance_segmentation_config
+    base_path = "/home/jordi/Documents/Github/CS4245_cv_project_zebra_fish"
+    os.chdir(base_path)
+    register_datasets("dataset")
+
+    cfg = get_default_instance_segmentation_config(
+        False
+    )
+
+    print(len(get_dataset("train", cfg)))
+    print(len(get_dataset("val", cfg)))
+    print(len(get_dataset("test", cfg)))
+    print()
+
+    print(len(DatasetCatalog.get("train_without_direction")))
+    print(len(DatasetCatalog.get("val_without_direction")))
+    print(len(DatasetCatalog.get("test_without_direction")))
+
+    #help(DatasetCatalog)
+    print(DatasetCatalog.list())
