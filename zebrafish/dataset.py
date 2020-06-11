@@ -134,6 +134,8 @@ def config_to_dataset(img_dir, config, use_direction_classes):
 
 
 
+
+
 if __name__ == '__main__':
     from zebrafish.configs import get_default_instance_segmentation_config
     base_path = "/home/jordi/Documents/Github/CS4245_cv_project_zebra_fish"
