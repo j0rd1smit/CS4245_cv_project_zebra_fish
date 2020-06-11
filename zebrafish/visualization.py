@@ -74,7 +74,7 @@ def plot_dataset(dataset_name, cfg, n_images = 1):
         plt.show()
 
 
-def plot_prediction(image, prediction, cfg, title=""):
+def plot_prediction(image, prediction, cfg, title="", show=True):
     meta_data = get_meta_dataset("train", cfg)
 
     v = Visualizer(image[:, :, ::-1],
@@ -87,7 +87,8 @@ def plot_prediction(image, prediction, cfg, title=""):
     plt.figure(figsize=(14, 10))
     plt.imshow(cv2.cvtColor(v.get_image()[:, :, ::-1], cv2.COLOR_BGR2RGB))
     plt.title(title)
-    plt.show()
+    if show:
+        plt.show()
 
 
 def plot_segementation(image, prediction):
