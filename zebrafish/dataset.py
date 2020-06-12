@@ -8,7 +8,6 @@ from detectron2.structures import BoxMode
 from sklearn.model_selection import train_test_split
 
 
-
 DIRECTION_CLASSES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 DIRECTION_PREFIX = "_direction"
 WITHOUT_DIRECTION_PREFIX = "_without_direction"
@@ -35,7 +34,7 @@ def get_name_with_prefix(name, use_direction_classes):
     return name + DIRECTION_PREFIX if use_direction_classes else name + WITHOUT_DIRECTION_PREFIX
 
 
-def register_datasets(path_to_dataset_dir, validation_size =  0.1, test_size = 0.1, seed=42, clear=True):
+def register_datasets(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
     if clear:
         DatasetCatalog.clear()
 
@@ -43,13 +42,12 @@ def register_datasets(path_to_dataset_dir, validation_size =  0.1, test_size = 0
     register_datasets_type(path_to_dataset_dir, False, validation_size=validation_size, test_size=test_size, seed=seed, clear=False)
 
 
-def register_datasets_type(path_to_dataset_dir, use_direction_classes, validation_size =  0.1, test_size = 0.1, seed=42, clear=True):
+def register_datasets_type(path_to_dataset_dir, use_direction_classes, validation_size =  0.25, test_size = 0.25, seed=42, clear=True):
     if clear:
         DatasetCatalog.clear()
 
     dataset_names = ["train", "test"] if validation_size == 0.0 else ["train", "val", "test"]
     configs = get_dataset_configs(path_to_dataset_dir, validation_size, test_size, seed)
-
 
     dataset_configs = dict(zip(dataset_names, configs))
 
@@ -58,16 +56,14 @@ def register_datasets_type(path_to_dataset_dir, use_direction_classes, validatio
     else:
         thing_classes = ["zebra_fish"]
 
-    def __fetch_data_set(name):
-        return lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes)
-
     for name in dataset_names:
-        DatasetCatalog.register(get_name_with_prefix(name, use_direction_classes), __fetch_data_set(name))
+        DatasetCatalog.register(get_name_with_prefix(name, use_direction_classes), lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], use_direction_classes))
+
 
         MetadataCatalog.get(get_name_with_prefix(name, use_direction_classes)).set(thing_classes=thing_classes)
 
 
-def get_dataset_configs(path_to_dataset_dir, validation_size =  0.1, test_size = 0.1, seed=42):
+def get_dataset_configs(path_to_dataset_dir, validation_size =  0.25, test_size = 0.25, seed=42):
     assert test_size > 0
     assert validation_size >= 0
     assert validation_size + test_size < 1
@@ -88,72 +84,59 @@ def config_to_dataset(img_dir, config, use_direction_classes):
     i = 0
 
     dataset_dicts = []
-
     for k, image_data in config.items():
-        record = dict()
+        for j in range(8):
+            record = dict()
 
-        record["file_name"] = os.path.join(img_dir, image_data["filename"])
-        record["image_id"] = i
-        i += 1
-
-        h, w = cv2.imread(record["file_name"]).shape[:2]
-        record["height"] = h
-        record["width"] = w
-
-        annotations = []
-
-        for region in image_data["regions"]:
-            shape_attributes = region["shape_attributes"]
-            px = shape_attributes["all_points_x"]
-            py = shape_attributes["all_points_y"]
-
-            poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
-            poly = list(itertools.chain.from_iterable(poly))
-
-            if use_direction_classes:
-                assert "class" in region["region_attributes"], "No class found for " + record["file_name"]
-                category_id = DIRECTION_CLASSES.index(region["region_attributes"]["class"])
-                assert category_id != -1, "Unknown class label: " + region["region_attributes"]["class"]
+            # Set flags for augmentation
+            if j % 2 == 0:
+                record["flip"] = True
             else:
-                category_id = 0
+                record["flip"] = False
+            record["rotate"] = round(j / 2) * 90
 
-            annotation = {
-                "bbox": [min(px), min(py), max(px), max(py)],
-                "bbox_mode": BoxMode.XYXY_ABS,
-                "segmentation": [poly],
-                "category_id": category_id,  # There is only 1 catagory
-                "iscrowd": 0
-            }
-            annotations.append(annotation)
+            record["file_name"] = os.path.join(img_dir, image_data["filename"])
+            record["image_id"] = i
+            i += 1
 
-        record["annotations"] = annotations
+            h, w = cv2.imread(record["file_name"]).shape[:2]
+            record["height"] = h
+            record["width"] = w
+
+            annotations = []
+
+            for region in image_data["regions"]:
+                shape_attributes = region["shape_attributes"]
+                px = shape_attributes["all_points_x"]
+                py = shape_attributes["all_points_y"]
+
+                poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
+                poly = list(itertools.chain.from_iterable(poly))
+
+                if use_direction_classes:
+                    assert "class" in region["region_attributes"], "No class found for " + record["file_name"]
+                    category_id = DIRECTION_CLASSES.index(region["region_attributes"]["class"])
+                    assert category_id != -1, "Unknown class label: " + region["region_attributes"]["class"]
+                else:
+                    category_id = 0
+
+                annotation = {
+                    "bbox": [min(px), min(py), max(px), max(py)],
+                    "bbox_mode": BoxMode.XYXY_ABS,
+                    "segmentation": [poly],
+                    "category_id": category_id,  # There is only 1 catagory
+                    "iscrowd": 0
+                }
+                annotations.append(annotation)
+
+            record["annotations"] = annotations
 
         dataset_dicts.append(record)
+
     return dataset_dicts
 
 
+def segemeted_image(image, prediction):
+    masks = prediction["instances"].pred_masks.cpu().numpy()
 
 
-
-
-if __name__ == '__main__':
-    from zebrafish.configs import get_default_instance_segmentation_config
-    base_path = "/home/jordi/Documents/Github/CS4245_cv_project_zebra_fish"
-    os.chdir(base_path)
-    register_datasets("dataset")
-
-    cfg = get_default_instance_segmentation_config(
-        False
-    )
-
-    print(len(get_dataset("train", cfg)))
-    print(len(get_dataset("val", cfg)))
-    print(len(get_dataset("test", cfg)))
-    print()
-
-    print(len(DatasetCatalog.get("train_without_direction")))
-    print(len(DatasetCatalog.get("val_without_direction")))
-    print(len(DatasetCatalog.get("test_without_direction")))
-
-    #help(DatasetCatalog)
-    print(DatasetCatalog.list())
