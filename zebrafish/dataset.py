@@ -9,7 +9,9 @@ from sklearn.model_selection import train_test_split
 
 
 
-DIRECTION_CLASSES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+#TODO
+#TODO DIRECTION_CLASSES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+DIRECTION_CLASSES = ["Deformed", "Healthy"]
 DIRECTION_PREFIX = "_direction"
 WITHOUT_DIRECTION_PREFIX = "_without_direction"
 
