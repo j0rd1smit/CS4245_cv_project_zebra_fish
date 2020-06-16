@@ -23,6 +23,7 @@ TYPE_TO_ANNOTIATION_FILE = {
     UNLABELED_TYPE: "via_region_data.json",
 }
 
+
 def load_all_image_in_dataset(name, cfg):
     images = []
 
@@ -60,18 +61,17 @@ def register_datasets_type(path_to_dataset_dir, date_set_type, validation_size =
     dataset_names = ["train", "test"] if validation_size == 0.0 else ["train", "val", "test"]
     configs = get_dataset_configs(path_to_dataset_dir, date_set_type, validation_size, test_size, seed)
 
-
     dataset_configs = dict(zip(dataset_names, configs))
 
     thing_classes = TYPE_TO_CLASS_NAME[date_set_type]
     class_names = None if date_set_type == UNLABELED_TYPE else TYPE_TO_CLASS_NAME[date_set_type]
+
 
     def __fetch_data_set(name):
         return lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], class_names)
 
     for name in dataset_names:
         DatasetCatalog.register(get_name_with_prefix(name, date_set_type), __fetch_data_set(name))
-
         MetadataCatalog.get(get_name_with_prefix(name, date_set_type)).set(thing_classes=thing_classes)
 
 
@@ -96,50 +96,57 @@ def config_to_dataset(img_dir, config, class_names = None):
     i = 0
 
     dataset_dicts = []
-
     for k, image_data in config.items():
-        record = dict()
+        for j in range(8):
+            record = dict()
 
-        record["file_name"] = os.path.join(img_dir, image_data["filename"])
-        record["image_id"] = i
-        i += 1
-
-        h, w = cv2.imread(record["file_name"]).shape[:2]
-        record["height"] = h
-        record["width"] = w
-
-        annotations = []
-
-        for region in image_data["regions"]:
-            shape_attributes = region["shape_attributes"]
-            px = shape_attributes["all_points_x"]
-            py = shape_attributes["all_points_y"]
-
-            poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
-            poly = list(itertools.chain.from_iterable(poly))
-
-            if class_names is not None:
-                assert "class" in region["region_attributes"], "No class found for " + record["file_name"]
-                assert region["region_attributes"]["class"] in class_names, f'Unknown class label: {region["region_attributes"]["class"]} it is not in: {class_names}'
-                category_id = class_names.index(region["region_attributes"]["class"])
+            # Set flags for augmentation
+            if j % 2 == 0:
+                record["flip"] = True
             else:
-                category_id = 0
+                record["flip"] = False
+            record["rotate"] = round(j / 2) * 90
 
-            annotation = {
-                "bbox": [min(px), min(py), max(px), max(py)],
-                "bbox_mode": BoxMode.XYXY_ABS,
-                "segmentation": [poly],
-                "category_id": category_id,
-                "iscrowd": 0
-            }
-            annotations.append(annotation)
+            record["file_name"] = os.path.join(img_dir, image_data["filename"])
+            record["image_id"] = i
+            i += 1
 
-        record["annotations"] = annotations
+            h, w = cv2.imread(record["file_name"]).shape[:2]
+            record["height"] = h
+            record["width"] = w
 
-        dataset_dicts.append(record)
+            annotations = []
+
+            for region in image_data["regions"]:
+                shape_attributes = region["shape_attributes"]
+                px = shape_attributes["all_points_x"]
+                py = shape_attributes["all_points_y"]
+
+                poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)]
+                poly = list(itertools.chain.from_iterable(poly))
+
+                if class_names is not None:
+                    assert "class" in region["region_attributes"], "No class found for " + record["file_name"]
+                    assert region["region_attributes"][
+                               "class"] in class_names, f'Unknown class label: {region["region_attributes"]["class"]} it is not in: {class_names}'
+                    category_id = class_names.index(region["region_attributes"]["class"])
+                else:
+                    category_id = 0
+
+                annotation = {
+                    "bbox": [min(px), min(py), max(px), max(py)],
+                    "bbox_mode": BoxMode.XYXY_ABS,
+                    "segmentation": [poly],
+                    "category_id": category_id,  # There is only 1 catagory
+                    "iscrowd": 0
+                }
+                annotations.append(annotation)
+
+            record["annotations"] = annotations
+
+            dataset_dicts.append(record)
+
     return dataset_dicts
-
-
 
 
 
