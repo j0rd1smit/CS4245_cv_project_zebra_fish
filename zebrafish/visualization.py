@@ -7,8 +7,6 @@ from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.utils.visualizer import ColorMode, Visualizer
 from matplotlib import colors as mcolors
 
-
-
 from zebrafish.dataset import get_meta_dataset, get_name_with_prefix
 from zebrafish.model import prediction_to_an_image_wide_mask, segement_image
 from zebrafish.utils import get_all_stored_model_paths
@@ -60,7 +58,7 @@ def _load_json_arr(json_path):
 
 
 def plot_dataset(dataset_name, cfg, n_images = 1):
-    dataset_name_with_prefix = get_name_with_prefix(dataset_name, cfg.DATASETS.USE_DIRECTION_CLASSES)
+    dataset_name_with_prefix = get_name_with_prefix(dataset_name, cfg.DATASETS.USE_DIRECTION_CLASSES, flip=cfg.DATA_TRANSFORMATIONS.FLIP, rotate=cfg.DATA_TRANSFORMATIONS.ROTATION)
     metadata = MetadataCatalog.get(dataset_name_with_prefix)
 
     for image_data in DatasetCatalog.get(dataset_name_with_prefix)[:n_images]:

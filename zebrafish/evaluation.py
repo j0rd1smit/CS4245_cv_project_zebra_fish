@@ -55,7 +55,7 @@ def IoU_score(predicted_mask, true_mask):
 def coco_evaluation(cfg, dataset_name):
     predictor = DefaultPredictor(cfg)
 
-    dataset_name_with_prefix = get_name_with_prefix(dataset_name, cfg.DATASETS.USE_DIRECTION_CLASSES)
+    dataset_name_with_prefix = get_name_with_prefix(dataset_name, cfg.DATASETS.TYPE, flip=cfg.DATA_TRANSFORMATIONS.FLIP, rotate=cfg.DATA_TRANSFORMATIONS.ROTATION)
     evaluator = COCOEvaluator(dataset_name_with_prefix, cfg, distributed=False, output_dir=cfg.OUTPUT_DIR)
 
     predictions = [predictor(img) for img in load_all_image_in_dataset(dataset_name, cfg)]

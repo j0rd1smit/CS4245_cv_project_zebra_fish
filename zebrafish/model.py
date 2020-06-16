@@ -1,6 +1,6 @@
 import os
-import numpy as np
 
+import numpy as np
 from detectron2.engine import DefaultPredictor
 
 

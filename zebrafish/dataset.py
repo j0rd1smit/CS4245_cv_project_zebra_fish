@@ -3,10 +3,10 @@ import json
 import os
 
 import cv2
+import random
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.structures import BoxMode
 from sklearn.model_selection import train_test_split
-
 
 FISH_TYPE = "FISH_TYPE"
 DIRECTION_TYPE = "DIRECTION_TYPE"
@@ -34,16 +34,18 @@ def load_all_image_in_dataset(name, cfg):
 
 
 def get_dataset(name, cfg):
-    return DatasetCatalog.get(get_name_with_prefix(name, cfg.DATASETS.TYPE))
+    return DatasetCatalog.get(get_name_with_prefix(name, cfg.DATASETS.TYPE, flip=cfg.DATA_TRANSFORMATIONS.FLIP, rotate=cfg.DATA_TRANSFORMATIONS.ROTATION))
 
 
 def get_meta_dataset(name, cfg):
-    return MetadataCatalog.get(get_name_with_prefix(name, cfg.DATASETS.TYPE))
+    return MetadataCatalog.get(get_name_with_prefix(name, cfg.DATASETS.TYPE, flip=cfg.DATA_TRANSFORMATIONS.FLIP, rotate=cfg.DATA_TRANSFORMATIONS.ROTATION))
 
 
-def get_name_with_prefix(name, type):
+def get_name_with_prefix(name, type, flip, rotate):
     assert type in TYPE_TO_CLASS_NAME, f'Unknown dataset type: {type}'
-    return f'{name}_{type}'
+    f = "Flip" if flip else "NoFlip"
+    r = "Rotate" if rotate else "NoRotate"
+    return f'{name}_{type}_{f}_{r}'
 
 
 def register_datasets(path_to_dataset_dir, validation_size =  0.1, test_size = 0.1, seed=42, clear=True):
@@ -66,13 +68,13 @@ def register_datasets_type(path_to_dataset_dir, date_set_type, validation_size =
     thing_classes = TYPE_TO_CLASS_NAME[date_set_type]
     class_names = None if date_set_type == UNLABELED_TYPE else TYPE_TO_CLASS_NAME[date_set_type]
 
-
-    def __fetch_data_set(name):
-        return lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], class_names)
+    def __fetch_data_set(name, flips: bool, rotate: bool):
+        return lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], flips, rotate, class_names)
 
     for name in dataset_names:
-        DatasetCatalog.register(get_name_with_prefix(name, date_set_type), __fetch_data_set(name))
-        MetadataCatalog.get(get_name_with_prefix(name, date_set_type)).set(thing_classes=thing_classes)
+        for flip, rotate in [(False, False), (False, True), (True, False), (True, True)]:
+            DatasetCatalog.register(get_name_with_prefix(name, date_set_type, flip, rotate), __fetch_data_set(name, flip, rotate))
+            MetadataCatalog.get(get_name_with_prefix(name, date_set_type, flip, rotate)).set(thing_classes=thing_classes)
 
 
 def get_dataset_configs(path_to_dataset_dir, date_set_type, validation_size =  0.1, test_size = 0.1, seed=42):
@@ -84,6 +86,7 @@ def get_dataset_configs(path_to_dataset_dir, date_set_type, validation_size =  0
         dataset = list(json.load(f).items())
 
     train_set, test_set = train_test_split(dataset, test_size=test_size, random_state=seed)
+
     if validation_size > 0:
         train_set, validation_set = train_test_split(train_set, test_size=validation_size / (1 - test_size), random_state=seed)
 
@@ -92,20 +95,26 @@ def get_dataset_configs(path_to_dataset_dir, date_set_type, validation_size =  0
     return dict(train_set), dict(test_set)
 
 
-def config_to_dataset(img_dir, config, class_names = None):
+def config_to_dataset(img_dir, config, flips: bool, rotate: bool, class_names = None):
     i = 0
+    n_options = 1
+    if flips:
+        n_options *= 2
+    if rotate:
+        n_options *= 4
 
     dataset_dicts = []
     for k, image_data in config.items():
-        for j in range(8):
+        for j in range(n_options):
             record = dict()
 
             # Set flags for augmentation
-            if j % 2 == 0:
+            if flips and j % 2 == 0:
                 record["flip"] = True
             else:
                 record["flip"] = False
-            record["rotate"] = round(j / 2) * 90
+
+            record["rotate"] = round(j / 2) * 90 if rotate else 0
 
             record["file_name"] = os.path.join(img_dir, image_data["filename"])
             record["image_id"] = i
@@ -145,7 +154,8 @@ def config_to_dataset(img_dir, config, class_names = None):
             record["annotations"] = annotations
 
             dataset_dicts.append(record)
-
+    random.seed(42)
+    random.shuffle(dataset_dicts)
     return dataset_dicts
 
 
@@ -158,6 +168,8 @@ if __name__ == '__main__':
     register_datasets("dataset")
 
     cfg = get_default_instance_segmentation_config(FISH_TYPE)
+    cfg.DATA_TRANSFORMATIONS.ROTATION = True
+    cfg.DATA_TRANSFORMATIONS.FLIP = True
 
     print(len(get_dataset("train", cfg)))
     print(len(get_dataset("val", cfg)))

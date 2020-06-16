@@ -1,10 +1,10 @@
+import time
+
+import detectron2.utils.comm as comm
 import numpy as np
 import torch
-import time
-import datetime
 from detectron2.engine import HookBase
-from detectron2.utils.logger import log_every_n_seconds, setup_logger
-import detectron2.utils.comm as comm
+from detectron2.utils.logger import setup_logger
 
 setup_logger()
 class LossEvalHook(HookBase):

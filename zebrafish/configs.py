@@ -1,11 +1,10 @@
 import os
 import pickle
-import re
 
-from detectron2.config import get_cfg, CfgNode as CN
+from detectron2.config import CfgNode as CN, get_cfg
 from detectron2.model_zoo import model_zoo
 
-from zebrafish.dataset import TYPE_TO_CLASS_NAME, UNLABELED_TYPE, get_name_with_prefix
+from zebrafish.dataset import TYPE_TO_CLASS_NAME
 
 
 def load_config(path_to_model):
@@ -38,7 +37,7 @@ def update_output_dir_path(cfg):
     cfg.PICKLE = os.path.join(cfg.OUTPUT_DIR, "pickle")
 
 
-def get_default_instance_segmentation_config(dataset_type, training_set_name="train", test_set_name="val", max_iter = 1000, threshold=0.7):
+def get_default_instance_segmentation_config(dataset_type, max_iter = 1000, threshold=0.7):
     cfg = get_cfg()
 
 
@@ -58,8 +57,6 @@ def get_default_instance_segmentation_config(dataset_type, training_set_name="tr
 
 
     # Data set
-    cfg.DATASETS.TRAIN = (get_name_with_prefix(training_set_name, dataset_type),)
-    cfg.DATASETS.TEST = (get_name_with_prefix(test_set_name, dataset_type),)
     cfg.DATASETS.TYPE = dataset_type
 
     cfg.DATALOADER.NUM_WORKERS = 0
@@ -85,7 +82,7 @@ def get_default_instance_segmentation_config(dataset_type, training_set_name="tr
 
     return cfg
 
-def get_rs_101_instance_segmentation_config(dataset_type, training_set_name="train", test_set_name="val", max_iter = 1000, threshold=0.7):
+def get_rs_101_instance_segmentation_config(dataset_type, max_iter = 1000, threshold=0.7):
     cfg = get_cfg()
     cfg.DATA_TRANSFORMATIONS = CN()
     cfg.DATA_TRANSFORMATIONS.ROTATION = True
@@ -103,11 +100,9 @@ def get_rs_101_instance_segmentation_config(dataset_type, training_set_name="tra
 
 
     # Data set
-    cfg.DATASETS.TRAIN = (get_name_with_prefix(training_set_name, dataset_type),)
-    cfg.DATASETS.TEST = (get_name_with_prefix(test_set_name, dataset_type),)
     cfg.DATASETS.TYPE = dataset_type
 
-    cfg.DATALOADER.NUM_WORKERS = 2
+    cfg.DATALOADER.NUM_WORKERS = 0
 
     # validation
     cfg.TEST.EVAL_PERIOD = 60
