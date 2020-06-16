@@ -72,9 +72,14 @@ def register_datasets_type(path_to_dataset_dir, date_set_type, validation_size =
         return lambda: config_to_dataset(path_to_dataset_dir, dataset_configs[name], flips, rotate, class_names)
 
     for name in dataset_names:
-        for flip, rotate in [(False, False), (False, True), (True, False), (True, True)]:
-            DatasetCatalog.register(get_name_with_prefix(name, date_set_type, flip, rotate), __fetch_data_set(name, flip, rotate))
-            MetadataCatalog.get(get_name_with_prefix(name, date_set_type, flip, rotate)).set(thing_classes=thing_classes)
+
+            for flip, rotate in [(False, False), (False, True), (True, False), (True, True)]:
+                if "train" in name:
+                    DatasetCatalog.register(get_name_with_prefix(name, date_set_type, flip, rotate), __fetch_data_set(name, flip, rotate))
+                    MetadataCatalog.get(get_name_with_prefix(name, date_set_type, flip, rotate)).set(thing_classes=thing_classes)
+                else:
+                    DatasetCatalog.register(get_name_with_prefix(name, date_set_type, flip, rotate), __fetch_data_set(name, False, False))
+                    MetadataCatalog.get(get_name_with_prefix(name, date_set_type, flip, rotate)).set(thing_classes=thing_classes)
 
 
 def get_dataset_configs(path_to_dataset_dir, date_set_type, validation_size =  0.1, test_size = 0.1, seed=42):
@@ -168,7 +173,7 @@ if __name__ == '__main__':
     register_datasets("dataset")
 
     cfg = get_default_instance_segmentation_config(FISH_TYPE)
-    cfg.DATA_TRANSFORMATIONS.ROTATION = True
+    cfg.DATA_TRANSFORMATIONS.ROTATION = False
     cfg.DATA_TRANSFORMATIONS.FLIP = True
 
     print(len(get_dataset("train", cfg)))
@@ -184,5 +189,4 @@ if __name__ == '__main__':
     print()
 
 
-    #help(DatasetCatalog)
     print(DatasetCatalog.list())
