@@ -1,58 +1,13 @@
 
+
 # CS4245_cv_project_zebra_fish  
-  
-## Project goals  
-Given an image containing one more zebra fishes, detect were these fishes are located in the image.
-  
-  
-## Planning  
-  
-### Week 1  
-Goals:
-- Explore and understand the original project.
-- Explore and understand the problem domain.
-- Explore and understand the dataset.
-- Define the problem we are trying to solve.
-- Explore the possible approaches in the literature.
+This was a project for the TU Delft course CS4245 Seminar Computer Vision by Deep Learning (2019/20 Q4) with real-world applications. For more information, see the poster.
 
-Task:
+## Poster
+![alt text](https://github.com/j0rd1smit/CS4245_cv_project_zebra_fish/blob/master//poster.jpg?raw=true)
 
- - [ ] Set up the original project.
- - [ ] Write down a clear problem definition.
- - [ ] Write down clear metrics that measure how well the model performs.
- - [ ] Write an overview of the data. How does it look like, what are the target, etc.
- - [ ] Create an overview of the relevant literature to this problem.
-
-  
-### Week 2  
-Goals:
-
-Task:
-  
-### Week 3  
-Goals:
-
-Task:
-  
-### Week 4  
-Goals:
-
-Task:
-### Week 5  
-Goals:
-
-Task:
-  
-### Week 6  
-Goals:
-
-Task:
-### Week 7  
-Goals:
-
-Task:
-### Week 8
-Goals:
-
-Task:
-
+## Reproducibility
+- The dataset has been made publicly available and can be found [here].(https://github.com/j0rd1smit/CS4245_cv_project_zebra_fish/tree/master/dataset)
+- The source code publicly available in this repo.
+- The training process can be replicated using this [notebook](https://github.com/j0rd1smit/CS4245_cv_project_zebra_fish/blob/master/notebooks/colab/Detectron2_zebra_fish_segmatation-colab.ipynb) which can easily be run in [collab](https://colab.research.google.com/github/j0rd1smit/CS4245_cv_project_zebra_fish/blob/master/notebooks/colab/Detectron2_zebra_fish_segmatation-colab.ipynb).
+- The model weights for the final [standard](https://drive.google.com/file/d/1Djmf8dTG9Do21ij2w0ft3rPNBVuwEK7N/view?usp=sharing) and [fish type](https://drive.google.com/file/d/1bfV5zsNltYMp0fG3IzJtHjAlMVI1BDYU/view?usp=sharing) model can be found our google drive.
